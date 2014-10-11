@@ -10,6 +10,8 @@ RUN apt-get install -y postfix postfix-pgsql dovecot-common dovecot-imapd rsyslo
 
 RUN mkdir /var/vmail
 VOLUME /var/vmail
+RUN groupadd -g 500 vmail
+RUN useradd -g vmail -u 500 vmail -d /var/vmail -m
 
 VOLUME /etc/dovecot
 VOLUME /etc/postfix
