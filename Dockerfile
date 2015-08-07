@@ -1,12 +1,10 @@
-FROM debian:latest
+FROM phusion/baseimage:0.9.17
 
-RUN apt-get update
-RUN apt-get -y upgrade
+CMD ["/sbin/my_init"]
 
-RUN echo "postfix postfix/mailname string example.com" | debconf-set-selections
-RUN echo "postfix postfix/main_mailer_type string 'Internet Site'" | debconf-set-selections
-
-RUN apt-get install -y postfix postfix-pgsql dovecot-common dovecot-imapd rsyslog
+RUN apt-get update && \
+    apt-get install -y postfix postfix-pgsql dovecot-common dovecot-imapd dovecot-pgsql && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir /var/vmail
 VOLUME /var/vmail
@@ -21,7 +19,9 @@ EXPOSE 465
 EXPOSE 143
 EXPOSE 993
 
-ADD data/start.sh /start
-RUN chmod +x /start
-
-ENTRYPOINT ["/start"]
+RUN mkdir /etc/service/postfix && \
+    echo "#!/bin/sh\npostfix start && tail -f /var/log/mail.log" > /etc/service/postfix/run && \
+    chmod +x /etc/service/postfix/run
+RUN mkdir /etc/service/dovecot && \
+    echo "#!/bin/sh\ndovecot -F" > /etc/service/dovecot/run && \
+    chmod +x /etc/service/dovecot/run
